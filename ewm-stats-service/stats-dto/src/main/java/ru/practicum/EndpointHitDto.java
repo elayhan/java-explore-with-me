@@ -23,7 +23,7 @@ public class EndpointHitDto {
     @NotBlank
     String uri;
     @NotBlank
-    @Pattern(regexp = IpV4Format.pattern)
+    @Pattern(regexp = IpV4Format.PATTERN)
     String ip;
     @NotNull
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = PATTERN)
