@@ -35,7 +35,7 @@ public class ExceptionController {
                 .build();
     }
 
-    @ExceptionHandler({ConstraintViolationException.class, DateStartException.class})
+    @ExceptionHandler(DateStartException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleBedRequestException(final RuntimeException e) {
         log.error(e.getMessage());
@@ -47,7 +47,8 @@ public class ExceptionController {
 
     @ExceptionHandler({EventStateException.class,
             RequestValidationException.class,
-            DataIntegrityViolationException.class})
+            DataIntegrityViolationException.class,
+            ConstraintViolationException.class})
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleConflictEx(final RuntimeException e) {
         log.error(e.getMessage());
