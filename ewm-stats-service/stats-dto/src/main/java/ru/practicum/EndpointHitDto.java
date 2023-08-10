@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 import static ru.practicum.utils.CustomDateFormat.PATTERN;
 
 @Getter
+@Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
@@ -27,5 +29,6 @@ public class EndpointHitDto {
     String ip;
     @NotNull
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = PATTERN)
-    LocalDateTime timestamp;
+    @Builder.Default()
+    LocalDateTime timestamp = LocalDateTime.now();
 }

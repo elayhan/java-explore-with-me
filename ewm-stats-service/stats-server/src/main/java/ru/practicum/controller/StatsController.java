@@ -10,6 +10,7 @@ import ru.practicum.EndpointHitDto;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.service.StatsService;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,7 +24,8 @@ public class StatsController {
     private final StatsService service;
 
     @PostMapping("/hit")
-    public ResponseEntity<EndpointHitDto> postHit(@RequestBody @Valid EndpointHitDto endpointHitDto) {
+    public ResponseEntity<EndpointHitDto> postHit(@RequestBody @Valid EndpointHitDto endpointHitDto, HttpServletRequest request) {
+        endpointHitDto.setIp(request.getRemoteAddr());
         log.info("PostHit: {}", endpointHitDto.toString());
         return ResponseEntity.status(HttpStatus.CREATED).body(service.postHit(endpointHitDto));
     }
