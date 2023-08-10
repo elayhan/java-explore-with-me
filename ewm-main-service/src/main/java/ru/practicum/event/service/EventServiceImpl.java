@@ -9,7 +9,6 @@ import ru.practicum.event.dto.*;
 import ru.practicum.event.enums.PubSort;
 import ru.practicum.event.mapper.EventMapper;
 import ru.practicum.event.model.Event;
-import ru.practicum.event.model.location.Location;
 import ru.practicum.event.model.state.EventState;
 import ru.practicum.event.repository.EventRepository;
 import ru.practicum.exception.DateStartException;
@@ -25,7 +24,7 @@ import ru.practicum.request.model.Request;
 import ru.practicum.request.repository.RequestRepository;
 import ru.practicum.user.model.User;
 import ru.practicum.user.repository.UserRepository;
-import ru.practicum.util.StatUtil;
+import ru.practicum.util.StatService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ public class EventServiceImpl implements EventService {
     private final RequestRepository requestRepository;
     private final EventMapper mapper;
     private final RequestMapper requestMapper;
-    private final StatUtil statUtil;
+    private final StatService statService;
 
     @Override
     public List<EventShortDto> getEventByUser(Long userId, int from, int size) {
@@ -103,46 +102,6 @@ public class EventServiceImpl implements EventService {
         strategyMap.get(state).accept(state);
     }
 
-    private <T extends UpdateEventDto> void updateEvent(Event event, T updateEvent) {
-        if (updateEvent.getAnnotation() != null) {
-            event.setAnnotation(updateEvent.getAnnotation());
-        }
-
-        if (updateEvent.getCategory() != null) {
-            Category category = getCategory(updateEvent.getCategory());
-            event.setCategory(category);
-        }
-
-        if (updateEvent.getDescription() != null) {
-            event.setDescription(updateEvent.getDescription());
-        }
-
-        if (updateEvent.getEventDate() != null) {
-            event.setEventDate(updateEvent.getEventDate());
-        }
-
-        if (updateEvent.getLocation() != null) {
-            Location location = mapper.locationDtoToLocation(updateEvent.getLocation());
-            event.setLocation(location);
-        }
-
-        if (updateEvent.getPaid() != null) {
-            event.setPaid(updateEvent.getPaid());
-        }
-
-        if (updateEvent.getParticipantLimit() != null) {
-            event.setParticipantLimit(updateEvent.getParticipantLimit());
-        }
-
-        if (updateEvent.getRequestModeration() != null) {
-            event.setRequestModeration(updateEvent.getRequestModeration());
-        }
-
-        if (updateEvent.getTitle() != null) {
-            event.setTitle(updateEvent.getTitle());
-        }
-    }
-
     @Override
     public EventFullDto updateEventByUser(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
         getUser(userId);
@@ -154,7 +113,7 @@ public class EventServiceImpl implements EventService {
             throw new EventStateException("Опубликованное событие нельзя редактировать.");
         }
 
-        updateEvent(event, updateEventUserRequest);
+        mapper.updateEvent(event, updateEventUserRequest);
         if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
             throw new EventStateException("До начала события слишком МАЛА времени. " +
                     "Для редактирования до события должно оставаться более 2 часов");
@@ -174,10 +133,17 @@ public class EventServiceImpl implements EventService {
                                                   LocalDateTime rangeStart,
                                                   LocalDateTime rangeEnd,
                                                   int from, int size) {
-        if (rangeStart == null && rangeEnd == null) {
+        if (rangeStart == null) {
             rangeStart = LocalDateTime.now();
+        }
+        if (rangeEnd == null) {
             rangeEnd = LocalDateTime.now().plusYears(30);
         }
+
+        if (rangeEnd.isBefore(rangeStart)) {
+            throw new DateStartException("Начало позже конца");
+        }
+
         Pageable pageable = getPageable(from, size);
         return mapper.eventListToEventFullDto(repository.getAllEventForAdmin(users,
                 states,
@@ -192,7 +158,7 @@ public class EventServiceImpl implements EventService {
         Event event = repository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено."));
 
-        updateEvent(event, updateEventAdminRequest);
+        mapper.updateEvent(event, updateEventAdminRequest);
         if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
             throw new EventStateException("До начала события слишком МАЛА времени. " +
                     "Для редактирования до события должно оставаться более 1 часа");
@@ -215,8 +181,10 @@ public class EventServiceImpl implements EventService {
                                                 PubSort sort,
                                                 int from, int size) {
 
-        if (rangeStart == null && rangeEnd == null) {
+        if (rangeStart == null) {
             rangeStart = LocalDateTime.now();
+        }
+        if (rangeEnd == null) {
             rangeEnd = LocalDateTime.now().plusYears(30);
         }
 
@@ -224,7 +192,7 @@ public class EventServiceImpl implements EventService {
             throw new DateStartException("Начало позже конца");
         }
 
-        statUtil.hitEvent(null);
+        statService.hitEvent(null);
         Pageable pageable = getPageable(from, size, sort);
 
         List<Event> eventList = repository.getAllEventForPub(
@@ -246,16 +214,14 @@ public class EventServiceImpl implements EventService {
         }
 
         if (sort.equals(PubSort.VIEWS)) {
-            resultEventList.sort((o1, o2) -> {
-                return Math.toIntExact(o2.getViews() - o1.getViews());
-            });
+            resultEventList.sort((o1, o2) -> Math.toIntExact(o2.getViews() - o1.getViews()));
         }
         return resultEventList;
     }
 
     @Override
     public EventFullDto getEventByIdForPub(Long id) {
-        statUtil.hitEvent(id);
+        statService.hitEvent(id);
         return mapper.eventToEventFullDto(repository.getEventByIdForPub(id)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено.")));
     }

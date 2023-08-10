@@ -1,7 +1,9 @@
 package ru.practicum.compilation.model;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 import ru.practicum.event.model.Event;
 
 import javax.persistence.*;
@@ -12,6 +14,7 @@ import java.util.Set;
 @Table(name = "compilation")
 @Getter
 @Setter
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Compilation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,23 +1,24 @@
 package ru.practicum.event.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 import ru.practicum.category.mapper.CategoryMapper;
 import ru.practicum.category.model.Category;
+import ru.practicum.category.service.CategoryService;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
+import ru.practicum.event.dto.UpdateEventDto;
 import ru.practicum.event.dto.location.LocationDto;
 import ru.practicum.event.model.Event;
 import ru.practicum.event.model.location.Location;
 import ru.practicum.request.repository.RequestRepository;
 import ru.practicum.user.mapper.UserMapper;
 import ru.practicum.user.model.User;
-import ru.practicum.util.StatUtil;
+import ru.practicum.util.StatService;
 
 import java.util.List;
 
-@Mapper(uses = {CategoryMapper.class, UserMapper.class, StatUtil.class, RequestRepository.class})
+@Mapper(uses = {CategoryMapper.class, UserMapper.class, StatService.class, RequestRepository.class, CategoryService.class})
 public interface EventMapper {
     @Mapping(target = "initiator", source = "user")
     @Mapping(target = "category", source = "category")
@@ -39,5 +40,9 @@ public interface EventMapper {
     List<EventShortDto> eventListToEventShortDto(List<Event> eventList);
 
     List<EventFullDto> eventListToEventFullDto(List<Event> eventList);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+            nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
+    void updateEvent(@MappingTarget Event event, UpdateEventDto updateEventDto);
 
 }

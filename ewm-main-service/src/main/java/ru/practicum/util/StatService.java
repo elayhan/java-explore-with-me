@@ -18,7 +18,7 @@ import static ru.practicum.utils.CustomDateFormat.PATTERN;
 
 @Service
 @RequiredArgsConstructor
-public class StatUtil {
+public class StatService {
     private final StatClient statClient;
     private static final String APP = "ewm-main-service";
     private static final String URI_PREFIX = "/events";
